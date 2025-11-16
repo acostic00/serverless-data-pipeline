@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Serverless Data Pipeline Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial;
+            margin: 20px;
+            padding: 0;
+            background: #f1f1f1;
+        }
+
+        h2 {
+            background: #333;
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            background: white;
+        }
+
+        table, th, td {
+            border: 1px solid #999;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        button {
+            padding: 10px 15px;
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+
+        .card {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <h1>📊 Serverless Data Pipeline Dashboard</h1>
+
+    <!-- Raw Data -->
+    <h2>Raw Data</h2>
+    <div class="card">
+        <button onclick="loadRawData()">Refresh Raw Data</button>
+        <table id="rawTable">
+            <tr>
+                <th>Name</th>
+                <th>Value</th>
+                <th>Timestamp</th>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Processed Data -->
+    <h2>Processed Data</h2>
+    <div class="card">
+        <button onclick="loadProcessedData()">Refresh Processed Data</button>
+        <table id="processedTable">
+            <tr>
+                <th>Username</th>
+                <th>Value</th>
+                <th>Category</th>
+                <th>Processed At</th>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Chart -->
+    <h2>Data Chart</h2>
+    <div class="card">
+        <canvas id="dataChart" width="400" height="200"></canvas>
+    </div>
+
+<script>
+const API_BASE = "http://localhost:3000";
+
+// Load raw data
+async function loadRawData() {
+    const res = await fetch(API_BASE + "/analytics");
+    const data = await res.json();
+
+    const table = document.getElementById("rawTable");
+    table.innerHTML = `
+        <tr>
+            <th>Name</th>
+            <th>Value</th>
+            <th>Timestamp</th>
+        </tr>
+    `;
+
+    data.forEach(item => {
+        table.innerHTML += `
+            <tr>
+                <td>${item.name}</td>
+                <td>${item.value}</td>
+                <td>${new Date(item.timestamp).toLocaleString()}</td>
+            </tr>
+        `;
+    });
+}
+
+// Load processed data
+async function loadProcessedData() {
+    const res = await fetch(API_BASE + "/processed");
+    const data = await res.json();
+
+    const table = document.getElementById("processedTable");
+    table.innerHTML = `
+        <tr>
+            <th>Username</th>
+            <th>Value</th>
+            <th>Category</th>
+            <th>Processed At</th>
+        </tr>
+    `;
+
+    data.forEach(item => {
+        table.innerHTML += `
+            <tr>
+                <td>${item.username}</td>
+                <td>${item.value}</td>
+                <td>${item.category}</td>
+                <td>${new Date(item.processedAt).toLocaleString()}</td>
+            </tr>
+        `;
+    });
+
+    loadChart(data);
+}
+
+// Generate chart
+let chart;
+function loadChart(data) {
+    const ctx = document.getElementById('dataChart').getContext('2d');
+
+    const labels = data.map(d => d.username);
+    const values = data.map(d => d.value);
+
+    if (chart) chart.destroy();
+
+    chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Processed Values',
+                data: values,
+                borderWidth: 1
+            }]
+        }
+    });
+}
+
+// Auto load on page start
+loadRawData();
+loadProcessedData();
+</script>
+
+</body>
+</html>
